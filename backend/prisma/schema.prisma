@@ -1,0 +1,74 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  ADMIN
+  OPERATOR
+}
+
+enum MachineStatus {
+  RUNNING
+  STOPPED
+  MAINTENANCE
+  ERROR
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  password  String
+  name      String
+  role      UserRole  @default(OPERATOR)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Machine {
+  id               Int             @id @default(autoincrement())
+  name             String
+  location         String
+  status           MachineStatus   @default(STOPPED)
+
+  temperature      Float           @default(0)
+  productionCount  Int             @default(0)
+
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  logs             Log[]
+  alarms           Alarm[]
+}
+
+model Log {
+  id          Int       @id @default(autoincrement())
+
+  machineId   Int
+  machine     Machine   @relation(fields: [machineId], references: [id])
+
+  message     String
+  createdAt   DateTime  @default(now())
+}
+
+enum AlarmLevel {
+  WARNING
+  CRITICAL
+}
+
+model Alarm {
+  id          Int         @id @default(autoincrement())
+
+  machineId   Int
+  machine     Machine     @relation(fields: [machineId], references: [id])
+
+  message     String
+  level       AlarmLevel
+
+  createdAt   DateTime    @default(now())
+}
