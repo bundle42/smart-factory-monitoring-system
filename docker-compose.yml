@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  db:
+    image: mysql:8
+    container_name: smartfactory-db
+
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: smartfactory
+
+    ports:
+      - "3307:3306"
+
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    container_name: smartfactory-backend
+
+    ports:
+      - "3000:3000"
+
+    environment:
+      DATABASE_URL: mysql://root:root@db:3306/smartfactory
+      JWT_SECRET: my_super_secret_key
+      JWT_EXPIRES_IN: 1d
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    container_name: smartfactory-frontend
+
+    ports:
+      - "3001:3001"
+
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:
