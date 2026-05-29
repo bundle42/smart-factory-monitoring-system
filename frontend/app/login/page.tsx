@@ -19,7 +19,7 @@ export default function LoginPage() {
       saveToken(data.access_token);
 
       router.push("/dashboard");
-    } catch (error) {
+    } catch {
       alert("Login failed");
     }
   };

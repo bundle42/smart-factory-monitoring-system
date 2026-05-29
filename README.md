@@ -64,6 +64,7 @@ NestJS + Next.js + MySQL + Prisma + Socket.IO + Docker 기반의 실시간 설�
 
 - WebSocket 기반 실시간 설비 상태 업데이트
 - 대시보드 자동 반영
+- 가상 공장 시뮬레이터 기반 설비 데이터 자동 생성
 
 ---
 
@@ -73,6 +74,17 @@ NestJS + Next.js + MySQL + Prisma + Socket.IO + Docker 기반의 실시간 설�
 - 생산량 Bar Chart
 - 온도 Line Chart
 - 상태 시각화
+- 시뮬레이터 시작 / 중지 / 수동 갱신 / 초기화
+
+---
+
+### 🧪 가상 공장 시뮬레이터
+
+- 서버 시작 시 `Machine` 데이터가 없으면 가상 설비 4대를 자동 생성합니다.
+- 기본 3초마다 온도, 생산량, 상태를 갱신하고 WebSocket으로 `machineUpdated` 이벤트를 전송합니다.
+- 환경변수 `SIMULATOR_ENABLED=false`로 자동 실행을 끌 수 있습니다.
+- 환경변수 `SIMULATOR_INTERVAL_MS=5000`처럼 갱신 주기를 바꿀 수 있습니다.
+- 관리자 권한으로 `/simulator/start`, `/simulator/stop`, `/simulator/tick`, `/simulator/reset`을 호출할 수 있습니다.
 
 ---
 

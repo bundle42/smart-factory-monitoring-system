@@ -21,8 +21,8 @@ export default function ProductionChart({ data }: Props) {
     <div className="bg-white border rounded-xl p-4 shadow">
       <h2 className="text-xl font-bold mb-4">Production Overview</h2>
 
-      <div className="w-full h-[300px]">
-        <ResponsiveContainer>
+      <div className="w-full min-w-0">
+        <ResponsiveContainer width="100%" height={300}>
           <BarChart data={data}>
             <XAxis dataKey="name" />
             <YAxis />
