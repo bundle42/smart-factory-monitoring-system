@@ -2,9 +2,11 @@ import { Machine } from "@/types/machine";
 
 interface Props {
   machine: Machine;
+  selected?: boolean;
+  onSelect?: () => void;
 }
 
-export default function MachineCard({ machine }: Props) {
+export default function MachineCard({ machine, selected = false, onSelect }: Props) {
   const getStatusColor = () => {
     switch (machine.status) {
       case "RUNNING":
@@ -25,7 +27,13 @@ export default function MachineCard({ machine }: Props) {
   };
 
   return (
-    <div className="border rounded-xl p-4 shadow">
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`w-full rounded border p-4 text-left shadow transition hover:border-black ${
+        selected ? "border-black ring-2 ring-black/10" : ""
+      }`}
+    >
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold">{machine.name}</h2>
 
@@ -47,6 +55,6 @@ export default function MachineCard({ machine }: Props) {
           <strong>Production:</strong> {machine.productionCount}
         </p>
       </div>
-    </div>
+    </button>
   );
 }

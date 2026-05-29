@@ -6,3 +6,12 @@ export interface Machine {
   temperature: number;
   productionCount: number;
 }
+
+export interface MachineReading {
+  id: number;
+  machineId: number;
+  status: string;
+  temperature: number;
+  productionCount: number;
+  createdAt: string;
+}

@@ -44,6 +44,22 @@ model Machine {
 
   logs             Log[]
   alarms           Alarm[]
+  readings         MachineReading[]
+}
+
+model MachineReading {
+  id               Int             @id @default(autoincrement())
+
+  machineId        Int
+  machine          Machine         @relation(fields: [machineId], references: [id])
+
+  status           MachineStatus
+  temperature      Float
+  productionCount  Int
+
+  createdAt        DateTime        @default(now())
+
+  @@index([machineId, createdAt])
 }
 
 model Log {

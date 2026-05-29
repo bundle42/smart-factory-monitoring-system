@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 
@@ -33,6 +34,16 @@ export class MachinesController {
   @Get()
   findAll() {
     return this.machinesService.findAll();
+  }
+
+  @Get(':id/readings')
+  getReadings(
+    @Param('id') id: string,
+    @Query('range') range?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    return this.machinesService.getReadings(Number(id), range, from, to);
   }
 
   @Get(':id')

@@ -142,10 +142,20 @@ export class SimulatorService implements OnModuleInit, OnModuleDestroy {
           },
         });
 
+        await this.prisma.machineReading.create({
+          data: {
+            machineId: updatedMachine.id,
+            status: updatedMachine.status,
+            temperature: updatedMachine.temperature,
+            productionCount: updatedMachine.productionCount,
+          },
+        });
+
         await this.recordEvents(
           machine.id,
           machine.status,
           nextStatus,
+          machine.temperature,
           nextTemperature,
         );
 
@@ -177,6 +187,15 @@ export class SimulatorService implements OnModuleInit, OnModuleDestroy {
             status: MachineStatus.RUNNING,
             temperature: profile.baseTemperature,
             productionCount: 0,
+          },
+        });
+
+        await this.prisma.machineReading.create({
+          data: {
+            machineId: updatedMachine.id,
+            status: updatedMachine.status,
+            temperature: updatedMachine.temperature,
+            productionCount: updatedMachine.productionCount,
           },
         });
 
@@ -259,6 +278,7 @@ export class SimulatorService implements OnModuleInit, OnModuleDestroy {
     machineId: number,
     previousStatus: MachineStatus,
     nextStatus: MachineStatus,
+    previousTemperature: number,
     temperature: number,
   ) {
     if (previousStatus !== nextStatus) {
@@ -268,17 +288,25 @@ export class SimulatorService implements OnModuleInit, OnModuleDestroy {
       );
     }
 
-    if (temperature >= 90) {
+    if (previousTemperature < 90 && temperature >= 90) {
       await this.alarmsService.createAlarm(
         machineId,
         `Simulator high temperature detected: ${temperature}°C`,
         'CRITICAL',
       );
-    } else if (temperature >= 78) {
+      await this.logsService.createLog(
+        machineId,
+        `Simulator critical temperature crossed 90°C: ${temperature}°C`,
+      );
+    } else if (previousTemperature < 80 && temperature >= 80) {
       await this.alarmsService.createAlarm(
         machineId,
         `Simulator temperature warning: ${temperature}°C`,
         'WARNING',
+      );
+      await this.logsService.createLog(
+        machineId,
+        `Simulator temperature warning crossed 80°C: ${temperature}°C`,
       );
     }
   }

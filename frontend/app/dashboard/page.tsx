@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import api from "@/services/api";
 import MachineCard from "@/components/MachineCard";
+import MachineHistoryChart from "@/components/MachineHistoryChart";
 import socket from "@/lib/socket";
-import { Machine } from "@/types/machine";
+import { Machine, MachineReading } from "@/types/machine";
 
 import { getToken } from "@/lib/auth";
 import { useRouter } from "next/navigation";
@@ -21,6 +22,13 @@ interface SimulatorStatus {
 
 export default function DashboardPage() {
   const [machines, setMachines] = useState<Machine[]>([]);
+  const [selectedMachineId, setSelectedMachineId] = useState<number | null>(
+    null,
+  );
+  const [readings, setReadings] = useState<MachineReading[]>([]);
+  const [readingRange, setReadingRange] = useState<"hour" | "day" | "week">(
+    "day",
+  );
   const [simulator, setSimulator] = useState<SimulatorStatus | null>(null);
   const [simulatorError, setSimulatorError] = useState("");
   const [simulatorBusy, setSimulatorBusy] = useState(false);
@@ -30,6 +38,13 @@ export default function DashboardPage() {
     const response = await api.get("/machines");
 
     setMachines(response.data);
+    setSelectedMachineId((currentMachineId) => {
+      if (currentMachineId) {
+        return currentMachineId;
+      }
+
+      return response.data[0]?.id ?? null;
+    });
   }, []);
 
   const fetchSimulatorStatus = useCallback(async () => {
@@ -42,6 +57,21 @@ export default function DashboardPage() {
       setSimulatorError("Simulator status is unavailable");
     }
   }, []);
+
+  const fetchReadings = useCallback(async () => {
+    if (!selectedMachineId) {
+      setReadings([]);
+      return;
+    }
+
+    const response = await api.get(`/machines/${selectedMachineId}/readings`, {
+      params: {
+        range: readingRange,
+      },
+    });
+
+    setReadings(response.data);
+  }, [readingRange, selectedMachineId]);
 
   useEffect(() => {
     const token = getToken();
@@ -56,19 +86,33 @@ export default function DashboardPage() {
     };
 
     void initializeDashboard();
+  }, [fetchMachines, fetchSimulatorStatus, router]);
 
-    socket.on("machineUpdated", (updatedMachine) => {
+  useEffect(() => {
+    socket.on("machineUpdated", (updatedMachine: Machine) => {
       setMachines((prev) =>
         prev.map((machine) =>
           machine.id === updatedMachine.id ? updatedMachine : machine,
         ),
       );
+
+      if (updatedMachine.id === selectedMachineId) {
+        void fetchReadings();
+      }
     });
 
     return () => {
       socket.off("machineUpdated");
     };
-  }, [fetchMachines, fetchSimulatorStatus, router]);
+  }, [fetchReadings, selectedMachineId]);
+
+  useEffect(() => {
+    const initializeReadings = async () => {
+      await fetchReadings();
+    };
+
+    void initializeReadings();
+  }, [fetchReadings]);
 
   const runSimulatorAction = async (
     action: "start" | "stop" | "tick" | "reset",
@@ -81,6 +125,7 @@ export default function DashboardPage() {
 
       setSimulator(response.data);
       await fetchMachines();
+      await fetchReadings();
     } catch {
       setSimulatorError("Admin permission is required for simulator controls");
     } finally {
@@ -100,6 +145,8 @@ export default function DashboardPage() {
       ? machines.reduce((sum, machine) => sum + machine.temperature, 0) /
         machines.length
       : 0;
+  const selectedMachine =
+    machines.find((machine) => machine.id === selectedMachineId) ?? machines[0];
 
   return (
     <div className="p-8 space-y-8">
@@ -186,9 +233,21 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-3 gap-4">
         {machines.map((machine) => (
-          <MachineCard key={machine.id} machine={machine} />
+          <MachineCard
+            key={machine.id}
+            machine={machine}
+            selected={machine.id === selectedMachine?.id}
+            onSelect={() => setSelectedMachineId(machine.id)}
+          />
         ))}
       </div>
+
+      <MachineHistoryChart
+        machine={selectedMachine}
+        readings={readings}
+        range={readingRange}
+        onRangeChange={setReadingRange}
+      />
 
       <div className="grid grid-cols-2 gap-6">
         <ProductionChart
