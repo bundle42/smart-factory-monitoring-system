@@ -37,6 +37,8 @@ services:
       db:
         condition: service_healthy
 
+    command: sh -c "npx prisma migrate deploy && npm run start:prod"
+
   frontend:
     build: ./frontend
     container_name: smartfactory-frontend
